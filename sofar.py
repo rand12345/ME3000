@@ -5,27 +5,27 @@ sys.path.insert(0, '/home/pi/ME3000')
 import me3000 as me
 
 app = Flask(__name__)
+def MyConfiguration():
+    file = 'agile.cfg')
+    parser = configparser.ConfigParser()
+    parser.optionxform = str  # make option names case sensitive
+    found = parser.read(file)
+    if not found:
+        raise ValueError('No config file found!')
+    return parser
 
-THRESHOLD_FILE="/home/pi/ME3000/pct.txt"
+cfg = MyConfiguration()
 
 def read_threshold():
-    try:
-        tfile = open(THRESHOLD_FILE, "r")
-        threshold = int(tfile.readline().split("=")[-1])
-        tfile.close()
-    except:
-        threshold = -1
-    return threshold
+    return  int(cfg['sofar']['threshold'])
 
 
 def write_threshold(pctval):
     if pctval >=20 and pctval <= 100:
         try:
-            ostr = "THRESHOLD=" + str(pctval)
-            print(ostr)
-            tfile = open(THRESHOLD_FILE, "w")
-            tfile.write(ostr)
-            tfile.close()
+            config.set ('sofar', 'threshold', str(pctval))
+            with open ('agile.cfg', 'w') as configfile:
+                config.write (configfile)
             return pctval
         except:
             return -1
