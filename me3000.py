@@ -1,9 +1,22 @@
 #!/usr/bin/env python
 import struct
 from serial import Serial, PARITY_NONE
-from umodbus.client.serial import rtu
+import socket
+import configparser
+#from umodbus.client.serial import rtu
+from umodbus.client.tcp import rtu
 from umodbus.functions import function_code_to_function_map, ModbusFunction
 
+def MyConfiguration():
+    file = 'agile.cfg'
+    parser = configparser.ConfigParser()
+    parser.optionxform = str  # make option names case sensitive
+    found = parser.read(file)
+    if not found:
+        raise ValueError('No config file found!')
+    return parser
+
+cfg = MyConfiguration()
 
 class ME3000:
 
@@ -26,35 +39,31 @@ class ME3000:
 
     port_id = None
     slave_id = None
-    serial_port = None
 
     def __init__(self, port, slave):
         self.port_id = port
         self.slave_id = slave
-        self.serial_port = self.get_serial_port()
-
+        self.modbus_tcp = self.get_tcp()
 
     def connect(self):
-        if self.serial_port is not None:
-            self.serial_port = self.get_serial_port()
+        if self.modbus_tcp is not None:
+            self.modbus_tcp = self.get_tcp()
 
-
-    def get_serial_port(self):
-        """ Return serial.Serial instance, ready to use for RS485."""
-        port = Serial(port=self.port_id, baudrate=9600, parity=PARITY_NONE,
-                      stopbits=1, bytesize=8, timeout=1)
-        return port
-
+    def get_tcp(self):
+        """ Return sock instance, ready to use for TCP."""
+        tcp_ = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+        ip_ = cfg['sofar']['ip']
+        port_ = int (cfg['sofar']['port'])
+        tcp_.connect ((ip_, port_))
+        return tcp_
 
     def disconnect(self):
-        if self.serial_port is not None:
-          self.close_serial_port()
+        if self.modbus_tcp is not None:
+            self.close_tcp_port()
 
-
-    def close_serial_port(self):
-        self.serial_port.close()
-        self.serial_port = None
-
+    def close_tcp_port(self):
+        self.modbus_tcp.close()
+        self.modbus_tcp = None
 
     def set_auto(self):
         """ Switch inverter to AUTO."""
@@ -63,12 +72,11 @@ class ME3000:
                                          address=self.AUTO, 
                                          value=0)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
           ret_status = False
           response = 0
         return ret_status, response
-
 
     def set_charge(self, charge=3000):
         """ Set charge value."""
@@ -77,12 +85,11 @@ class ME3000:
                                          address=self.CHARGE, 
                                          value=charge)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
         return ret_status, response
-
 
     def set_discharge(self, discharge=3000):
         """ Set discharge value."""
@@ -91,12 +98,11 @@ class ME3000:
                                          address=self.DISCHARGE, 
                                          value=discharge)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
         return ret_status, response
-
 
     def read_holding(self):
         """ Read all the holding registers from inverter."""
@@ -105,12 +111,11 @@ class ME3000:
                                              starting_address=self.ME_HOLDING, 
                                              quantity=self.NUM_HOLDING)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
         return ret_status, response
-
 
     def read_input(self):
         """ Read the inverter's input registers."""
@@ -119,12 +124,11 @@ class ME3000:
                                            starting_address=self.ME_INPUT, 
                                            quantity=self.NUM_INPUT)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
         return ret_status, response
-
 
     def get_inverter_state(self):
         """ Return the inverter state."""
@@ -133,12 +137,11 @@ class ME3000:
                                              starting_address=self.ME_STATE, 
                                              quantity=1)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = [-1]
         return ret_status, response[0], self.INV_STATES[response[0]]
-
 
     def get_battery_percentage(self):
         """ Return the current charge percentage of the batteries."""
@@ -147,7 +150,7 @@ class ME3000:
                                              starting_address=self.BATTPCT,
                                              quantity=1)
         try:
-            response = rtu.send_message(message, self.serial_port)
+            response = rtu.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = [-1]

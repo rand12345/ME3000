@@ -6,13 +6,13 @@ import requests
 from pytz import timezone
 from sys import argv
 import sys
-sys.path.insert(0, '/home/pi/ME3000')
+#sys.path.insert(0, '/home/pi/ME3000')
 from me3000 import ME3000
 from MyME3000 import *
 
 
 def MyConfiguration():
-    file = 'agile.cfg')
+    file = 'agile.cfg'
     parser = configparser.ConfigParser()
     parser.optionxform = str  # make option names case sensitive
     found = parser.read(file)
@@ -177,7 +177,7 @@ def Sofar_to_manual_charge():
     if status:
         print(response)
         if response < threshold:
-            charge_rate = int(cfg['sofar']['charge_rate'] # todo - maybe vary charge rate
+            charge_rate = int(cfg['sofar']['charge_rate']) # todo - maybe vary charge rate
 
             print("Below threshold, set to charge at", charge_rate)
             status, response = roo.set_charge (charge_rate)

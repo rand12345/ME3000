@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 import time
 import numpy
 import sys
-sys.path.insert(0, '/home/pi/ME3000')
+#sys.path.insert(0, '/home/pi/ME3000')
 from me3000 import ME3000
 from MyME3000 import *
 
