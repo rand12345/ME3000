@@ -239,7 +239,7 @@ def main_routine():
         print('{:%Y-%m-%d %H:%M} {:2.2f}p {}'.format(thistime, thisprice, tag))
     skip_ = False
     while True:
-        global skip_
+        #global skip_
         now = datetime.datetime.now().astimezone(uk_tz)
         print('\n{:%Y-%m-%d %H:%M:%S} - Tariff now = {}p'.format(now, agile_.currentrate))
         # signed float of current tariff price inc VAT
