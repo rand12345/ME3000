@@ -3,8 +3,8 @@ import struct
 from serial import Serial, PARITY_NONE
 import socket
 import configparser
-#from umodbus.client.serial import rtu
-from umodbus.client.tcp import rtu
+#from umodbus.client.serial import tcp
+import umodbus.client.tcp as tcp
 from umodbus.functions import function_code_to_function_map, ModbusFunction
 
 def MyConfiguration():
@@ -72,7 +72,7 @@ class ME3000:
                                          address=self.AUTO, 
                                          value=0)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
           ret_status = False
           response = 0
@@ -85,7 +85,7 @@ class ME3000:
                                          address=self.CHARGE, 
                                          value=charge)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
@@ -98,7 +98,7 @@ class ME3000:
                                          address=self.DISCHARGE, 
                                          value=discharge)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
@@ -107,11 +107,11 @@ class ME3000:
     def read_holding(self):
         """ Read all the holding registers from inverter."""
         ret_status = True
-        message = rtu.read_holding_registers(slave_id=self.slave_id,
+        message = tcp.read_holding_registers(slave_id=self.slave_id,
                                              starting_address=self.ME_HOLDING, 
                                              quantity=self.NUM_HOLDING)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
@@ -120,11 +120,11 @@ class ME3000:
     def read_input(self):
         """ Read the inverter's input registers."""
         ret_status = True
-        message = rtu.read_input_registers(slave_id=self.slave_id,
+        message = tcp.read_input_registers(slave_id=self.slave_id,
                                            starting_address=self.ME_INPUT, 
                                            quantity=self.NUM_INPUT)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = 0
@@ -133,11 +133,11 @@ class ME3000:
     def get_inverter_state(self):
         """ Return the inverter state."""
         ret_status = True
-        message = rtu.read_holding_registers(slave_id=self.slave_id,
+        message = tcp.read_holding_registers(slave_id=self.slave_id,
                                              starting_address=self.ME_STATE, 
                                              quantity=1)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = [-1]
@@ -146,11 +146,11 @@ class ME3000:
     def get_battery_percentage(self):
         """ Return the current charge percentage of the batteries."""
         ret_status = True
-        message = rtu.read_holding_registers(slave_id=self.slave_id,
+        message = tcp.read_holding_registers(slave_id=self.slave_id,
                                              starting_address=self.BATTPCT,
                                              quantity=1)
         try:
-            response = rtu.send_message(message, self.modbus_tcp)
+            response = tcp.send_message(message, self.modbus_tcp)
         except:
             ret_status = False
             response = [-1]
@@ -167,7 +167,7 @@ def write_passive_register(slave_id, address, value):
     function._address = address
     function._value = value
 
-    return rtu._create_request_adu(slave_id, function.request_pdu)
+    return tcp._create_request_adu(slave_id, function.request_pdu)
 
 # SoFar ME30000 Passive Mode
 WRITE_PASSIVE_REGISTER = 66
