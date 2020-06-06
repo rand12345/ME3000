@@ -40,8 +40,8 @@ class ME3000:
     port_id = None
     slave_id = None
 
-    def __init__(self, port, slave):
-        self.port_id = port
+    def __init__(self, slave):
+        # self.port_id = port
         self.slave_id = slave
         self.modbus_tcp = self.get_tcp()
 
@@ -54,7 +54,10 @@ class ME3000:
         tcp_ = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
         ip_ = cfg['sofar']['ip']
         port_ = int (cfg['sofar']['port'])
-        tcp_.connect ((ip_, port_))
+        try:
+            tcp_.connect ((ip_, port_))
+        except Exception as error:
+            print('get_tcp error: {}'.format(error))
         return tcp_
 
     def disconnect(self):

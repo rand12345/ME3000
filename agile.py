@@ -159,16 +159,19 @@ class ThirtyMinRounder:
             return False
         return True
 
+
 def Sofar_to_manual_charge():
     threshold = int(cfg['sofar']['threshold'])
+    slave_id = int(cfg['sofar']['id'])
     if threshold < 20 or threshold > 100:
         threshold = 100
 
-    roo = ME3000 (SERIAL_PORT, SLAVE)
-
+    roo = ME3000 (slave_id)
+    print ('{} Sofar_to_manual_charge'.format (datetime.datetime.now ()))
     print("Charge threshold =", threshold)
     print("Get inverter state ...")
     status, invstate, invstring = roo.get_inverter_state ()
+    print ('roo.get_inverter_state - Status: {} invstate: {} invstring: {}'.format (status, invstate, invstring))
     if status:
         print("State = ", invstate, "[", invstring, "]")
 
@@ -177,7 +180,7 @@ def Sofar_to_manual_charge():
     if status:
         print(response)
         if response < threshold:
-            charge_rate = int(cfg['sofar']['charge_rate']) # todo - maybe vary charge rate
+            charge_rate = int(cfg['sofar']['charge_rate'])  # todo - maybe vary charge rate
 
             print("Below threshold, set to charge at", charge_rate)
             status, response = roo.set_charge (charge_rate)
@@ -197,16 +200,19 @@ def Sofar_to_manual_charge():
 
 
 def Sofar_to_auto():
-    roo = ME3000 (SERIAL_PORT, SLAVE)
+    slave_id = int (cfg['sofar']['id'])
+    roo = ME3000 (slave_id)
 
-    print(datetime.datetime.now())
+    print('{} Sofar_to_auto'.format(datetime.datetime.now()))
     print("Get inverter state ...")
     status, invstate, invstring = roo.get_inverter_state ()
+    print('roo.get_inverter_state - Status: {} invstate: {} invstring: {}'.format(status, invstate, invstring))
     if status:
         print("State = ", invstate, "[", invstring, "]")
 
     print("Get battery percentage ...")
     status, response = roo.get_battery_percentage ()
+    print ('roo.get_battery_percentage - Status: {} Response: {}'.format (status, response))
     if status:
         print(response)
 
@@ -237,7 +243,7 @@ def main_routine():
             agile_.currentrate = thisprice
             tag = '<-- You are here'
         print('{:%Y-%m-%d %H:%M} {:2.2f}p {}'.format(thistime, thisprice, tag))
-    skip_ = False
+
     while True:
         #global skip_
         now = datetime.datetime.now().astimezone(uk_tz)
@@ -245,18 +251,25 @@ def main_routine():
         # signed float of current tariff price inc VAT
         low_threshold = float(cfg['tariff']['low_threshold'])
 
-        if agile_.currentrate > 0:  # plunge rate
-            Sofar_to_manual_charge()
-            skip_ = True
-        if agile_.currentrate > low_threshold and not skip_:  # on peak rates
+        if agile_.currentrate < 0:  # plunge rate
+            print ('Plunge status true, tariff {}p'.format(agile_.currentrate))
+            pass  # Add plunge routine here
+
+        elif agile_.currentrate > low_threshold:  # on peak rates
             # Do something with postive value rate
-            print('Turn on inverter')
-            skip_ = True
+            print('Turn on inverter, tariff {}p'.format(agile_.currentrate))
             Sofar_to_auto()
-        elif agile_.currentrate < low_threshold and not skip_:  # off peak rates
+            time.sleep (30)
+            continue
+
+        elif agile_.currentrate < low_threshold:  # off peak rates
             # Do something with negative value rate
-            print('Turn off inverter, turn on charger')
+            print('Turn off inverter, turn on charger, tariff {}p'.format(agile_.currentrate))
             Sofar_to_manual_charge()
+            time.sleep (30)
+            continue
+        # temp time loop bypassed
+
         counter_ = ThirtyMinRounder()
         while not counter_.check():
             time.sleep(1)  # sleep until next 30 min window
