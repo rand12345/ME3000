@@ -24,6 +24,8 @@ class ME3000:
     DISCHARGE=0x0101
     CHARGE=0x0102
     AUTO=0x0103
+    STANDBY = 0x0100
+    STANDBY_VAL = 0x5555
 
     ME_HOLDING=0x0200 
     NUM_HOLDING=69
@@ -158,6 +160,19 @@ class ME3000:
             ret_status = False
             response = [-1]
         return ret_status, response[0]
+
+    def set_standby(self):
+        """ Switch inverter to STANDBY."""
+        ret_status = True
+        message = write_passive_register(slave_id=self.slave_id,
+                                         address=self.STANDBY,
+                                         value=self.STANDBY_VAL)
+        try:
+            response = tcp.send_message(message, self.modbus_tcp)
+        except:
+          ret_status = False
+          response = 0
+        return ret_status, response
 
 
 def write_passive_register(slave_id, address, value):
